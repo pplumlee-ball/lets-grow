@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Help Them Grow — Card Draw</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#7ec8e3;font-family:sans-serif;}
+body{display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 3rem;}
+.intro{max-width:580px;width:100%;margin-bottom:1.5rem;background:rgba(255,255,255,0.72);border-radius:14px;padding:1.25rem 1.5rem;border:1.5px solid rgba(100,160,210,0.35);}
+.intro-title{font-size:15px;font-weight:600;color:#0c2e4a;margin-bottom:6px;}
+.intro-body{font-size:13px;color:#1a4a6a;line-height:1.6;}
+.card-tool{max-width:580px;width:100%;padding:1.5rem;border-radius:16px;background:#b8daf0;position:relative;overflow:hidden;}
+.sky-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+.content{position:relative;z-index:1;}
+.htg-title{font-size:18px;font-weight:500;color:#0c2e4a;margin-bottom:4px;}
+.htg-sub{font-size:14px;color:#1a4a6a;line-height:1.5;margin-bottom:1.5rem;}
+.table{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:1.5rem;}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.col-label{font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;}
+.col-hint{font-size:11px;text-align:center;line-height:1.4;}
+.ch .col-label{color:#1a5c0a;}
+.cf .col-label{color:#7a3d00;}
+.ci .col-label{color:#1a2e5c;}
+.ch .col-hint{color:#2e7a18;}
+.cf .col-hint{color:#9a5200;}
+.ci .col-hint{color:#2a3e6e;}
+.deck-wrap{width:100%;cursor:pointer;position:relative;}
+.deck-outer{width:100%;padding-bottom:135%;position:relative;}
+.deck-shadow{position:absolute;inset:0;border-radius:12px;transform:translate(5px,5px);}
+.ch .deck-shadow{background:#5a9e20;}
+.cf .deck-shadow{background:#d4820a;}
+.ci .deck-shadow{background:#4a6aaa;}
+.deck-face{position:absolute;inset:0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;}
+.ch .deck-face{background:#2d7a10;border:2px solid #1a5c0a;}
+.cf .deck-face{background:#c47000;border:2px solid #a05800;}
+.ci .deck-face{background:#3a5a9e;border:2px solid #2a4480;}
+.deck-canvas{position:absolute;inset:0;width:100%;height:100%;}
+.deck-label-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.ch .deck-name{font-size:13px;font-weight:500;color:#d0f0a0;}
+.cf .deck-name{font-size:13px;font-weight:500;color:#ffe0a0;}
+.ci .deck-name{font-size:13px;font-weight:500;color:#c0d8f8;}
+.ch .deck-cnt{font-size:10px;color:#a0d060;}
+.cf .deck-cnt{font-size:10px;color:#f0c060;}
+.ci .deck-cnt{font-size:10px;color:#90b8e8;}
+.ch .deck-tap{font-size:10px;color:#80b040;}
+.cf .deck-tap{font-size:10px;color:#d0a040;}
+.ci .deck-tap{font-size:10px;color:#7098c8;}
+.resonance{border-radius:12px;border:1.5px solid #7aaad0;background:#ddeef8;padding:1rem 1.25rem;margin-bottom:1.25rem;}
+.closing{border-radius:12px;border:1.5px solid #5a9e20;background:#c8f080;padding:1rem 1.25rem;margin-bottom:1.25rem;}
+.reset-row{display:flex;justify-content:flex-end;margin-top:0.5rem;}
+.reset-btn{font-size:12px;color:#1a4a6a;background:#ddeef8;border:1.5px solid #7aaad0;border-radius:6px;cursor:pointer;padding:4px 10px;display:flex;align-items:center;gap:4px;}
+.reset-btn:hover{background:#cce4f4;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<div class="intro">
+  <div class="intro-title">Before our meeting — a quick card draw</div>
+  <div class="intro-body">Draw one card from each deck below. They're designed to get you thinking about where you've been, where you're headed, and what's next.<br><br>If a question lands for you, hold onto it. We'll share at the start of the meeting — only what you're comfortable with, only if you want to. There's no wrong answer and nothing to prepare.</div>
+</div>
+
+<div class="card-tool">
+  <canvas class="sky-canvas" id="sky"></canvas>
+  <div class="content">
+    <div class="htg-title">Help Them Grow</div>
+    <div class="htg-sub">Click a deck to draw your card. Click again for a different one.</div>
+    <div class="table">
+      <div class="col ch">
+        <div class="col-label">Hindsight</div>
+        <div class="col-hint">Where you've been</div>
+        <div class="deck-wrap" onclick="handleDraw('h')">
+          <div class="deck-outer">
+            <div class="deck-shadow"></div>
+            <div class="deck-face">
+              <canvas class="deck-canvas" id="anim-h"></canvas>
+              <div class="deck-label-wrap">
+                <div class="deck-name">Hindsight</div>
+                <div class="deck-cnt" id="cnt-h"></div>
+                <div class="deck-tap">click to draw</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="drawn-h"></div>
+      </div>
+      <div class="col cf">
+        <div class="col-label">Foresight</div>
+        <div class="col-hint">Where you want to grow</div>
+        <div class="deck-wrap" onclick="handleDraw('f')">
+          <div class="deck-outer">
+            <div class="deck-shadow"></div>
+            <div class="deck-face">
+              <canvas class="deck-canvas" id="anim-f"></canvas>
+              <div class="deck-label-wrap">
+                <div class="deck-name">Foresight</div>
+                <div class="deck-cnt" id="cnt-f"></div>
+                <div class="deck-tap">click to draw</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="drawn-f"></div>
+      </div>
+      <div class="col ci">
+        <div class="col-label">Insight</div>
+        <div class="col-hint">The bridge between the two</div>
+        <div class="deck-wrap" onclick="handleDraw('i')">
+          <div class="deck-outer">
+            <div class="deck-shadow"></div>
+            <div class="deck-face">
+              <canvas class="deck-canvas" id="anim-i"></canvas>
+              <div class="deck-label-wrap">
+                <div class="deck-name">Insight</div>
+                <div class="deck-cnt" id="cnt-i"></div>
+                <div class="deck-tap">click to draw</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="drawn-i"></div>
+      </div>
+    </div>
+    <div id="res-area" style="display:none" class="resonance"></div>
+    <div id="close-area" style="display:none" class="closing"></div>
+    <div class="reset-row">
+      <button class="reset-btn" onclick="resetAll()">
+        &#8635; <span style="color:#1a4a6a;">Start over</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CARDS={
+  h:["What about your work energizes you?","What can your co-workers always count on you for?","What aspects of past jobs have you loved most?","What are you most proud of accomplishing at work — and why does it inspire such pride?","What do you wish you had more time for here at work?","What's so embedded in your DNA that you just can't keep yourself from doing it?","What's a moment at work where you felt like the best version of yourself — what were you doing?","What have you figured out about how you work best that took you longer than it should have?","If a newer colleague asked you what you're actually good at here, what would you tell them?"],
+  f:["How are the talent needs of the organization shifting?","What new skills and tools will be essential in the next few years to remain relevant and competitive?","What would you want your contribution to Ball to look like three years from now?","What's one thing Ball will need more of in the next few years that you'd actually want to be part of?","What would have to be true about your role for you to still want to be doing it five years from now?","If your current job evolved in the direction you'd hope for, what would change about it?"],
+  i:["What's one opportunity for growth in your current job that you'd like to seize right now?","What kind of work do you want to be doing now and into the future?","What one change could you make that would have the greatest positive effect on your success?","What's your definition of career success?","When you look at what might be possible in the future, what would you most regret not trying?","What's one thing you already know you want to develop — you just haven't said it out loud yet?","If your manager asked you tomorrow what kind of support would actually help you grow, what would you say?"]
+};
+const LABELS={h:'Hindsight',f:'Foresight',i:'Insight'};
+function sfl(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+const state={decks:{h:sfl([...CARDS.h]),f:sfl([...CARDS.f]),i:sfl([...CARDS.i])},drawn:{h:[],f:[],i:[]},showing:{h:0,f:0,i:0},selected:new Set()};
+const rafs={h:null,f:null,i:null};
+
+function initSky(){
+  const canvas=document.getElementById('sky');
+  const root=canvas.parentElement;
+  const clouds=[];
+  for(let i=0;i<8;i++)clouds.push({x:Math.random()*900,y:15+Math.random()*160,r:22+Math.random()*30,speed:0.1+Math.random()*0.18,bumps:2+Math.floor(Math.random()*4)});
+  function drawCloud(ctx,c){
+    ctx.save();ctx.translate(c.x,c.y);
+    ctx.beginPath();ctx.arc(0,0,c.r,0,Math.PI*2);
+    for(let b=0;b<c.bumps;b++){const bx=c.r*(0.55+b*0.52),by=-c.r*0.18+Math.sin(b*1.4)*c.r*0.16,br=c.r*(0.52+Math.sin(b)*0.12);ctx.arc(bx,by,br,0,Math.PI*2);}
+    ctx.fillStyle='rgba(255,255,255,0.82)';ctx.fill();ctx.restore();
+  }
+  function loop(){
+    requestAnimationFrame(loop);
+    const W=root.offsetWidth||580,H=root.offsetHeight||500;
+    canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#7ec8e3';ctx.fillRect(0,0,W,H*0.5);
+    ctx.fillStyle='#aadcf0';ctx.fillRect(0,H*0.5,W,H*0.3);
+    ctx.fillStyle='#ceeaf8';ctx.fillRect(0,H*0.8,W,H*0.2);
+    clouds.forEach(c=>{c.x+=c.speed;if(c.x-c.r*3>W)c.x=-c.r*3;drawCloud(ctx,c);});
+  }
+  loop();
+}
+
+function drawAnimH(ctx,t){
+  const w=ctx.canvas.width,h=ctx.canvas.height,cx=w/2,cy=h/2,maxR=Math.min(w,h)*0.42;
+  ctx.clearRect(0,0,w,h);
+  for(let r=1;r<=7;r++){const pulse=0.5+0.5*Math.sin(t*0.0006+r*0.7);ctx.beginPath();ctx.arc(cx,cy,(r/7)*maxR,0,Math.PI*2);ctx.strokeStyle='rgba(200,255,140,'+(0.15+0.22*pulse)+')';ctx.lineWidth=1.5+pulse*0.5;ctx.stroke();}
+  for(let s=0;s<10;s++){const angle=(s/10)*Math.PI*2+t*0.00025,len=maxR*(0.35+0.3*Math.abs(Math.sin(t*0.0004+s*0.8)));ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(angle)*len,cy+Math.sin(angle)*len);ctx.strokeStyle='rgba(180,255,100,0.07)';ctx.lineWidth=1;ctx.stroke();}
+}
+function drawAnimF(ctx,t){
+  const w=ctx.canvas.width,h=ctx.canvas.height,cx=w/2,horizon=h*0.62,sunY=horizon-h*0.24-h*0.05*Math.sin(t*0.0005),sunR=w*0.13+w*0.02*Math.sin(t*0.0007);
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();ctx.arc(cx,sunY,sunR,0,Math.PI*2);ctx.fillStyle='rgba(255,220,80,0.28)';ctx.fill();
+  ctx.beginPath();ctx.arc(cx,sunY,sunR*0.55,0,Math.PI*2);ctx.fillStyle='rgba(255,200,40,0.5)';ctx.fill();
+  for(let r=0;r<10;r++){const angle=(r/10)*Math.PI*2+t*0.0003,inner=sunR+3,outer=sunR+9+5*Math.sin(t*0.0009+r);ctx.beginPath();ctx.moveTo(cx+Math.cos(angle)*inner,sunY+Math.sin(angle)*inner);ctx.lineTo(cx+Math.cos(angle)*outer,sunY+Math.sin(angle)*outer);ctx.strokeStyle='rgba(255,210,60,0.35)';ctx.lineWidth=1.5;ctx.stroke();}
+  ctx.beginPath();ctx.moveTo(0,horizon);ctx.lineTo(w,horizon);ctx.strokeStyle='rgba(255,200,60,0.22)';ctx.lineWidth=1;ctx.stroke();
+}
+function drawAnimI(ctx,t){
+  const w=ctx.canvas.width,h=ctx.canvas.height,cx=w/2,cy=h/2,pulse=0.72+0.28*Math.sin(t*0.0009),s=Math.min(w,h)*0.27*pulse;
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx-s*0.44,cy+s*0.27);ctx.lineTo(cx-s*0.21,cy+s*0.07);ctx.lineTo(cx-s*0.27,cy+s*0.74);ctx.lineTo(cx,cy+s*0.44);ctx.lineTo(cx+s*0.27,cy+s*0.74);ctx.lineTo(cx+s*0.21,cy+s*0.07);ctx.lineTo(cx+s*0.44,cy+s*0.27);ctx.closePath();
+  ctx.fillStyle='rgba(180,210,255,0.45)';ctx.fill();ctx.strokeStyle='rgba(160,200,255,0.65)';ctx.lineWidth=1;ctx.stroke();
+  for(let p=0;p<6;p++){const angle=(p/6)*Math.PI*2+t*0.0004,dist=Math.min(w,h)*0.36,px=cx+Math.cos(angle)*dist,py=cy+Math.sin(angle)*dist,alpha=0.1+0.12*Math.abs(Math.sin(t*0.0007+p*1.1));ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.strokeStyle='rgba(160,200,255,'+alpha+')';ctx.lineWidth=0.8;ctx.stroke();ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fillStyle='rgba(160,200,255,'+(alpha*2.5)+')';ctx.fill();}
+}
+const ANIM_FNS={h:drawAnimH,f:drawAnimF,i:drawAnimI};
+
+function startAnim(d){
+  const canvas=document.getElementById('anim-'+d);if(!canvas)return;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  canvas.width=Math.round(rect.width)||160;canvas.height=Math.round(rect.height)||220;
+  const ctx=canvas.getContext('2d');
+  if(rafs[d])cancelAnimationFrame(rafs[d]);
+  function loop(t){rafs[d]=requestAnimationFrame(loop);ANIM_FNS[d](ctx,t);}
+  rafs[d]=requestAnimationFrame(loop);
+}
+
+function updateCount(d){document.getElementById('cnt-'+d).textContent=state.decks[d].length+' remaining';}
+
+function renderDrawn(d){
+  const el=document.getElementById('drawn-'+d);
+  if(!state.drawn[d].length){el.innerHTML='';return;}
+  const idx=state.showing[d],card=state.drawn[d][idx],total=state.drawn[d].length;
+  const C={h:{cat:'#1a5c0a',q:'#1a4a08',ftbg:'#a8e060',ftbdr:'#5a9e20',btn:'#1a5c0a',btnbdr:'#3a8010',cardbg:'#c8f080',cardbdr:'#5a9e20'},f:{cat:'#7a3d00',q:'#5c2e00',ftbg:'#ffd060',ftbdr:'#d4820a',btn:'#7a3d00',btnbdr:'#b06000',cardbg:'#ffe080',cardbdr:'#d4820a'},i:{cat:'#1a2e5c',q:'#121e48',ftbg:'#88aaee',ftbdr:'#4a6aaa',btn:'#1a2e5c',btnbdr:'#3a5a9e',cardbg:'#a8ccf8',cardbdr:'#4a6aaa'}};
+  const c=C[d];
+  const btnStyle='font-size:10px;font-weight:500;background:transparent;border:1.5px solid '+c.btnbdr+';border-radius:5px;cursor:pointer;padding:3px 7px;display:flex;align-items:center;gap:3px;';
+  const cycHtml=total>1?'<button onclick="handleCycle(\''+d+'\')" style="'+btnStyle+'"><span style="color:'+c.btn+';font-size:12px;">&#8651;</span><span style="color:'+c.btn+';">'+(idx+1)+'/'+total+'</span></button>':'';
+  el.innerHTML='<div style="width:100%;aspect-ratio:1/1.35;border-radius:12px;border:2px solid '+c.cardbdr+';background:'+c.cardbg+';display:flex;flex-direction:column;overflow:hidden;animation:slideDown 0.3s ease;"><div style="flex:1;padding:12px 12px 8px;display:flex;flex-direction:column;min-height:0;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;color:'+c.cat+';">'+LABELS[d]+'</div><div style="font-size:12px;line-height:1.55;flex:1;overflow:hidden;color:'+c.q+';">'+card+'</div></div><div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-top:1.5px solid '+c.ftbdr+';background:'+c.ftbg+';"><button onclick="handleRedraw(\''+d+'\')" style="'+btnStyle+'"><span style="font-size:12px;color:'+c.btn+';">&#8635;</span><span style="color:'+c.btn+';">different</span></button>'+cycHtml+'</div></div>';
+}
+
+function handleDraw(d){
+  if(state.decks[d].length===0)return;
+  state.drawn[d].unshift(state.decks[d].pop());state.showing[d]=0;
+  updateCount(d);renderDrawn(d);checkResonance();
+}
+function handleRedraw(d){
+  if(state.decks[d].length===0)return;
+  state.drawn[d].unshift(state.decks[d].pop());state.showing[d]=0;
+  updateCount(d);renderDrawn(d);
+  if(state.selected.has(d)){state.selected.delete(d);renderResonance();renderClosing();}
+}
+function handleCycle(d){
+  if(state.drawn[d].length<=1)return;
+  state.showing[d]=(state.showing[d]+1)%state.drawn[d].length;renderDrawn(d);
+}
+function checkResonance(){
+  const all=state.drawn.h.length&&state.drawn.f.length&&state.drawn.i.length;
+  document.getElementById('res-area').style.display=all?'block':'none';
+  if(all)renderResonance();
+}
+
+function checkbox(checked){
+  if(checked)return '<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0;margin-top:1px;" aria-hidden="true"><rect x="1" y="1" width="16" height="16" rx="4" fill="#1a60c0" stroke="#1a60c0" stroke-width="1.5"/><polyline points="4,9 7.5,12.5 14,5.5" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return '<svg width="18" height="18" viewBox="0 0 18 18" style="flex-shrink:0;margin-top:1px;" aria-hidden="true"><rect x="1" y="1" width="16" height="16" rx="4" fill="#f0f8ff" stroke="#7aaad0" stroke-width="1.5"/></svg>';
+}
+
+function renderResonance(){
+  const el=document.getElementById('res-area');
+  let html='<div style="font-size:13px;font-weight:500;color:#0c2e4a;margin-bottom:4px;">Did any of these land with you?</div>';
+  html+='<div style="font-size:12px;color:#2a5a7a;margin-bottom:12px;">Select as many as you like.</div>';
+  html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+  ['h','f','i'].forEach(d=>{
+    if(!state.drawn[d].length)return;
+    const isSel=state.selected.has(d),card=state.drawn[d][state.showing[d]];
+    const bg=isSel?'#d4eaff':'#f0f8ff',bdr=isSel?'#1a60c0':'#aac8e0',tc=isSel?'#0a2060':'#0c2e4a';
+    html+='<button onclick="toggle(\''+d+'\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid '+bdr+';background:'+bg+';cursor:pointer;text-align:left;width:100%;">'+checkbox(isSel)+'<span style="font-size:13px;color:'+tc+';line-height:1.5;">'+card+'</span></button>';
+  });
+  const ns=state.selected.has('none'),nbg=ns?'#d4eaff':'#f0f8ff',nbdr=ns?'#1a60c0':'#aac8e0',ntc=ns?'#0a2060':'#0c2e4a';
+  html+='<button onclick="toggle(\'none\')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid '+nbdr+';background:'+nbg+';cursor:pointer;text-align:left;width:100%;">'+checkbox(ns)+'<span style="font-size:13px;color:'+ntc+';line-height:1.5;">None of these landed for me</span></button>';
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function toggle(key){
+  if(key==='none'){state.selected.clear();state.selected.add('none');}
+  else{state.selected.delete('none');state.selected.has(key)?state.selected.delete(key):state.selected.add(key);}
+  renderResonance();renderClosing();
+}
+function renderClosing(){
+  const el=document.getElementById('close-area');
+  if(state.selected.size===0){el.style.display='none';return;}
+  el.style.display='block';
+  const msgs={
+    none:{t:"That's okay.",b:"Not every card lands the first time. Draw again or just come to the meeting and see what comes up."},
+    one:{t:"Hold onto that one.",b:"If you're comfortable sharing it, bring it to the meeting. There's no right answer — just what's true for you right now."},
+    two:{t:"Two is plenty.",b:"You don't have to share both. Bring whichever one you'd actually want to talk about."},
+    three:{t:"You came ready.",b:"All three landed. Bring whatever you're comfortable with — the conversation will take it from there."}
+  };
+  const key=state.selected.has('none')?'none':state.selected.size===1?'one':state.selected.size===2?'two':'three';
+  el.innerHTML='<div style="font-size:14px;font-weight:500;color:#1a5c0a;margin-bottom:6px;">'+msgs[key].t+'</div><div style="font-size:13px;color:#2e7a18;line-height:1.6;">'+msgs[key].b+'</div>';
+}
+function resetAll(){
+  ['h','f','i'].forEach(d=>{
+    state.decks[d]=sfl([...CARDS[d]]);state.drawn[d]=[];state.showing[d]=0;
+    document.getElementById('drawn-'+d).innerHTML='';updateCount(d);
+  });
+  state.selected=new Set();
+  document.getElementById('res-area').style.display='none';
+  document.getElementById('close-area').style.display='none';
+}
+window.addEventListener('load',()=>{initSky();['h','f','i'].forEach(d=>{startAnim(d);updateCount(d);});});
+</script>
+</body>
+</html>
